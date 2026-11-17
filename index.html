@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Lab</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --text:#14171c; --muted:#68707d; --line:#e3e6ea;
+  --up:#13834a; --down:#c4362c; --accent:#3b5bdb; --warn-bg:#fff4d6; --warn:#7a5600;
+  --s1:#3b5bdb; --s2:#d9480f; --s3:#2b8a3e; --s4:#ae3ec9; --s5:#868e96;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1115; --card:#181b21; --text:#e8eaee; --muted:#9aa1ad; --line:#2a2f38;
+    --up:#3ecf7c; --down:#ff6b5e; --accent:#7c94ff; --warn-bg:#3a2f0b; --warn:#ffd36b;
+    --s1:#7c94ff; --s2:#ff8f4d; --s3:#5bd37a; --s4:#d98bea; --s5:#aab1bb;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+h1{font-size:20px;margin:0;letter-spacing:.2px}
+h2{font-size:15px;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.up{color:var(--up)} .down{color:var(--down)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;border:1px solid var(--line);color:var(--muted)}
+.tag.on{border-color:var(--up);color:var(--up)} .tag.off{border-color:var(--down);color:var(--down)}
+a{color:var(--accent);text-decoration:none}
+#aviso{display:none;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.legend button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--text);
+  border-radius:999px;padding:3px 10px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.legend button[aria-pressed=false]{opacity:.45}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.seg{display:flex;gap:6px}
+.seg button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:3px 9px;cursor:pointer}
+.seg button.act{color:var(--text);border-color:var(--accent)}
+svg{display:block;width:100%;height:auto}
+.ev{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+.ev div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar span{display:block;height:100%;background:var(--accent)}
+#tip{position:fixed;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;
+  font-size:12px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:5}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>TRADING LAB <span class="muted" id="ver"></span></h1>
+    <span class="small muted" id="act">Cargando…</span>
+  </header>
+  <div id="aviso"></div>
+
+  <section class="card">
+    <div class="kpis">
+      <div class="kpi"><div class="l">Equipo</div><div class="v" id="k-valor">–</div></div>
+      <div class="kpi"><div class="l">Resultado</div><div class="v" id="k-roi">–</div></div>
+      <div class="kpi"><div class="l">Hoy</div><div class="v" id="k-hoy">–</div></div>
+      <div class="kpi"><div class="l">Lleva</div><div class="v" id="k-dias">–</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2 style="margin:0">Evolución</h2>
+      <div class="seg" id="rango">
+        <button data-h="24">24 h</button><button data-h="72">3 días</button><button data-h="0" class="act">Todo</button>
+      </div>
+    </div>
+    <div id="grafica" style="margin-top:8px"></div>
+    <div class="legend" id="leyenda"></div>
+  </section>
+
+  <section class="card">
+    <h2>Bots</h2>
+    <div class="tablewrap"><table id="t-bots"></table></div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>Posiciones abiertas</h2>
+      <div class="tablewrap"><table id="t-pos"></table></div>
+    </section>
+    <section class="card">
+      <h2>Últimos avisos</h2>
+      <div class="ev" id="eventos"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Últimas operaciones cerradas</h2>
+    <div class="tablewrap"><table id="t-ult"></table></div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>Carteras</h2>
+      <div class="small muted" id="c-resumen" style="margin-bottom:8px"></div>
+      <div class="tablewrap"><table id="t-car"></table></div>
+    </section>
+    <section class="card">
+      <h2>SCOUT y Helius</h2>
+      <div id="scout"></div>
+      <h2 style="margin-top:18px">Versiones</h2>
+      <div class="tablewrap"><table id="t-ver"></table></div>
+    </section>
+  </div>
+  <p class="small muted">Dinero ficticio (paper trading). Se actualiza solo cada minuto.</p>
+</main>
+<div id="tip"></div>
+<script>
+const FIREBASE_URL = "https://tradinglab-916a8-default-rtdb.europe-west1.firebasedatabase.app";
+const COLORES = ["--s1","--s2","--s3","--s4","--s5","--s1","--s2"];
+const EST = {COPYING:"copiando",QUALIFIED:"cualificada",OBSERVATION:"observación",SIGNAL:"señal",SUSPENDED:"suspendida",REJECTED:"rechazada"};
+let datos = null, rangoH = 0, ocultos = new Set(["__bots__"]);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const num = (x, d=2) => x == null ? "–" : Number(x).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
+const signo = (x, d=1, suf=" %") => x == null ? "–" : `<span class="${x>0?"up":x<0?"down":""}">${x>0?"+":""}${num(x,d)}${suf}</span>`;
+const hace = s => { const m = Math.round((Date.now()/1000 - s)/60); return m < 1 ? "ahora" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m/60)} h` : `hace ${Math.round(m/1440)} d`; };
+const dex = (t, s) => `<a href="https://dexscreener.com/solana/${encodeURIComponent(t)}" target="_blank" rel="noopener">${esc(s)}</a>`;
+
+async function cargar(){
+  try{
+    const r = await fetch(`${FIREBASE_URL}/panel.json`, {cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    if(!d) throw new Error("vacio");
+    datos = d; pintar();
+  }catch(e){
+    $("act").textContent = "No se pudieron cargar los datos";
+    if(!datos) aviso("No se pueden leer los datos de Firebase. Revisa la URL o las reglas de la base de datos.");
+  }
+}
+
+function aviso(t){ const a=$("aviso"); a.style.display = t ? "block" : "none"; a.textContent = t || ""; }
+
+function pintar(){
+  const d = datos, edad = Date.now()/1000 - d.ts;
+  $("ver").textContent = d.version;
+  $("act").textContent = `Actualizado ${new Date(d.ts*1000).toLocaleTimeString("es-ES")} · ${d.vigiladas} monedas vigiladas`;
+  aviso(edad > 300 ? `⚠ El bot no actualiza el panel desde ${hace(d.ts)}. ¿Está el PC encendido y el bot en marcha?` : "");
+  $("k-valor").textContent = `${num(d.equipo.valor)} $`;
+  $("k-roi").innerHTML = signo(d.equipo.roi, 2);
+  const hoy = d.bots.reduce((a,b)=>a+(b.hoy||0),0);
+  $("k-hoy").innerHTML = signo(hoy, 2, " $");
+  $("k-dias").textContent = `${num((d.ts-d.inicio)/86400,1)} días`;
+
+  $("t-bots").innerHTML = `<tr><th>Bot</th><th>Valor</th><th>Resultado</th><th>Ganadas</th><th>Abiertas</th><th>Hoy</th><th>Caída máx.</th><th class="l">Estado</th></tr>` +
+    d.bots.map(b => `<tr><td><b>${esc(b.nombre)}</b></td><td>${num(b.valor)} $</td><td>${signo(b.roi)}</td>
+      <td>${b.cerradas ? `${b.ganadas}/${b.cerradas}` : "–"}</td><td>${b.abiertas}</td><td>${signo(b.hoy,2," $")}</td>
+      <td>${num(b.dd,0)} %</td><td class="l"><span class="tag ${b.estado==="activo"?"on":"off"}">${esc(b.estado)}</span></td></tr>`).join("");
+
+  const pos = d.posiciones || [];
+  $("t-pos").innerHTML = pos.length ? `<tr><th>Moneda</th><th class="l">Bot</th><th>Ahora</th><th>Máx.</th><th>Tiempo</th><th>Invertido</th></tr>` +
+    pos.map(p => `<tr><td>${dex(p.token,p.sim)}${p.mitad?' <span class="tag on">½ vendida</span>':""}${p.prorrogas?` <span class="tag">+${p.prorrogas*2} h</span>`:""}</td>
+      <td class="l">${esc(p.bot)}</td><td>${signo(p.cambio)}</td><td>${signo(p.max)}</td><td>${num(p.min,0)} min</td><td>${num(p.inv)} $</td></tr>`).join("")
+    : `<tr><td class="muted">Ninguna ahora mismo.</td></tr>`;
+
+  const ev = d.eventos || [];
+  $("eventos").innerHTML = ev.length ? ev.map(x => `<div>${esc(x)}</div>`).join("") : `<div class="muted">Sin avisos desde que arrancó el bot.</div>`;
+
+  $("t-ult").innerHTML = `<tr><th class="l">Cuándo</th><th class="l">Moneda</th><th class="l">Bot</th><th>Resultado</th><th>$</th><th>Duración</th><th class="l">Motivo</th></tr>` +
+    (d.ultimas||[]).map(u => `<tr><td class="l">${esc(u.fecha.slice(5,16))}</td><td class="l">${dex(u.token,u.sim)}</td><td class="l">${esc(u.bot)}</td>
+      <td>${signo(u.pct)}</td><td>${signo(u.usd,2,"")}</td><td>${num(u.min,0)} min</td><td class="l small muted">${esc(u.motivo)}</td></tr>`).join("");
+
+  const c = d.carteras, k = c.conteo || {};
+  $("c-resumen").innerHTML = Object.keys(EST).filter(e => k[e]).map(e => `${EST[e]}: <b>${k[e]}</b>`).join(" · ") + ` · ${c.sombras} sombras abiertas`;
+  $("t-car").innerHTML = `<tr><th>Cartera</th><th class="l">Estado</th><th>Sombras</th><th>Media</th><th>Ganadoras</th></tr>` +
+    (c.lista||[]).slice().sort((a,b)=>(b.n>0)-(a.n>0)).slice(0,25).map(x => `<tr><td>${esc(x.nombre)}${x.origen==="scout"?' <span class="tag">SCOUT</span>':""}</td>
+      <td class="l">${esc(EST[x.estado]||x.estado)}</td><td>${x.n}${x.abiertas?` <span class="muted">(+${x.abiertas})</span>`:""}</td>
+      <td>${x.n?signo(x.media):"–"}</td><td>${x.n?`${num(x.dur,0)} min`:"–"}</td></tr>`).join("");
+
+  const s = d.scout, h = d.helius, pct = Math.min(100, h.prevision / h.limite * 100);
+  $("scout").innerHTML = `<div>Carteras encontradas: <b>${s.encontradas}</b> (${s.anadidas} añadidas en total)</div>
+    <div>Candidatas esperando: <b>${s.candidatas}</b> · monedas revisadas: ${s.revisadas}</div>
+    <div class="muted small">Última búsqueda: ${s.ultima ? hace(s.ultima) : "todavía no"}</div>
+    <div style="margin-top:12px">Helius: <b>${num(h.consultas,0)}</b> consultas este mes · previsión ${num(h.prevision,0)} de ${num(h.limite,0)}</div>
+    <div class="bar"><span style="width:${pct.toFixed(1)}%;background:${pct>90?css("--down"):css("--accent")}"></span></div>`;
+
+  const vs = (d.versiones||[]).concat([[d.version, `${num((d.ts-d.inicio)/86400,1)} días`, d.equipo.roi]]);
+  $("t-ver").innerHTML = `<tr><th>Versión</th><th>Duración</th><th>Resultado</th></tr>` +
+    vs.map(v => `<tr><td>${v[0]===d.version?"<b>":""}${esc(v[0])}${v[0]===d.version?" (ahora)</b>":""}</td><td>${esc(v[1])}</td><td>${signo(v[2])}</td></tr>`).join("");
+
+  grafica();
+}
+
+function grafica(){
+  const cv = datos.curva || {puntos:[]}, nombres = cv.nombres || [];
+  let pts = cv.puntos || [];
+  if(rangoH) pts = pts.filter(p => p[0] >= datos.ts - rangoH*3600);
+  const series = [{nombre:"Equipo", color:css("--text"), vals: pts.map(p=>p[1]), ancho:2.4, base:datos.equipo.inicial}]
+    .concat(nombres.map((n,i)=>({nombre:n, color:css(COLORES[i]), vals: pts.map(p=>(p[2]||[])[i]), ancho:1.5, base:250})));
+  const W = Math.max(300, $("grafica").clientWidth || 1000), H = W < 600 ? 230 : 300, pl = 46, pr = 8, pt = 10, pb = 24;
+  if(pts.length < 2){ $("grafica").innerHTML = `<p class="muted">Aún no hay datos suficientes.</p>`; return; }
+  const vis = series.filter(s => !ocultos.has(s.nombre) && !(s.nombre!=="Equipo" && ocultos.has("__bots__")));
+  const usarPct = vis.some(s=>s.nombre!=="Equipo");
+  const val = (s,v) => v==null ? null : usarPct ? (v/s.base-1)*100 : v;
+  const todos = vis.flatMap(s => s.vals.map(v=>val(s,v)).filter(v=>v!=null));
+  let lo = Math.min(...todos), hi = Math.max(...todos);
+  if(usarPct){ lo = Math.min(lo,0); hi = Math.max(hi,0); }
+  const pad = (hi-lo)*0.08 || 1; lo -= pad; hi += pad;
+  const t0 = pts[0][0], t1 = pts[pts.length-1][0];
+  const X = t => pl + (t-t0)/(t1-t0||1)*(W-pl-pr), Y = v => pt + (hi-v)/(hi-lo)*(H-pt-pb);
+  let g = "";
+  for(let i=0;i<=4;i++){ const v = lo + (hi-lo)*i/4, y = Y(v);
+    g += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${css("--line")}"/>`+
+         `<text x="${pl-6}" y="${y+4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${usarPct?(v>0?"+":"")+v.toFixed(0)+"%":v.toFixed(0)}</text>`; }
+  const ref = usarPct ? 0 : datos.equipo.inicial;
+  if(ref>=lo && ref<=hi) g += `<line x1="${pl}" x2="${W-pr}" y1="${Y(ref)}" y2="${Y(ref)}" stroke="${css("--muted")}" stroke-dasharray="4 4"/>`;
+  const dias = Math.max(1, Math.round((t1-t0)/86400));
+  const nt = Math.max(1, Math.min(dias, W < 600 ? 3 : 6));
+  for(let i=0;i<=nt;i++){ const t = t0 + (t1-t0)*i/nt;
+    const f = new Date(t*1000), txt = (t1-t0) < 2*86400 ? f.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : f.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+    g += `<text x="${X(t)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${css("--muted")}">${txt}</text>`; }
+  for(const s of vis){
+    let d = "", pen = false;
+    s.vals.forEach((v,i)=>{ const y = val(s,v); if(y==null){pen=false;return;} d += `${pen?"L":"M"}${X(pts[i][0]).toFixed(1)},${Y(y).toFixed(1)}`; pen = true; });
+    g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.ancho}" stroke-linejoin="round"/>`;
+  }
+  g += `<line id="cursor" y1="${pt}" y2="${H-pb}" stroke="${css("--muted")}" stroke-width="1" opacity="0"/>`;
+  $("grafica").innerHTML = `<svg viewBox="0 0 ${W} ${H}" id="svg" role="img" aria-label="Evolución del capital">${g}</svg>`;
+  $("leyenda").innerHTML = [{nombre:"Equipo",color:css("--text")}, {nombre:"__bots__",color:css("--muted"),txt:"Bots (en %)"}]
+    .concat(ocultos.has("__bots__") ? [] : nombres.map((n,i)=>({nombre:n,color:css(COLORES[i])})))
+    .map(s => `<button data-s="${esc(s.nombre)}" aria-pressed="${!ocultos.has(s.nombre)}"><i style="background:${s.color}"></i>${esc(s.txt||s.nombre)}</button>`).join("");
+  const svg = $("svg"), tip = $("tip"), cur = svg.querySelector("#cursor");
+  svg.onmousemove = svg.ontouchmove = ev => {
+    const e = ev.touches ? ev.touches[0] : ev, r = svg.getBoundingClientRect();
+    const x = (e.clientX - r.left)/r.width*W; if(x<pl||x>W-pr){tip.style.display="none";return;}
+    const t = t0 + (x-pl)/(W-pl-pr)*(t1-t0);
+    let i = 0, best = Infinity; pts.forEach((p,j)=>{const dd=Math.abs(p[0]-t); if(dd<best){best=dd;i=j;}});
+    cur.setAttribute("x1",X(pts[i][0])); cur.setAttribute("x2",X(pts[i][0])); cur.setAttribute("opacity",".6");
+    tip.innerHTML = `<b>${new Date(pts[i][0]*1000).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</b><br>`+
+      vis.map(s=>`<span style="color:${s.color}">●</span> ${esc(s.nombre)}: ${s.vals[i]==null?"–":num(s.vals[i])+" $"}`).join("<br>");
+    tip.style.display="block"; tip.style.left = Math.min(e.clientX+12, innerWidth-200)+"px"; tip.style.top = (e.clientY+12)+"px";
+  };
+  svg.onmouseleave = () => { tip.style.display="none"; cur.setAttribute("opacity","0"); };
+}
+
+$("leyenda").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
+  const n = b.dataset.s; ocultos.has(n) ? ocultos.delete(n) : ocultos.add(n); grafica(); });
+$("rango").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
+  rangoH = +b.dataset.h; [...$("rango").children].forEach(x=>x.classList.toggle("act", x===b)); grafica(); });
+let _rz; addEventListener("resize", () => { clearTimeout(_rz); _rz = setTimeout(() => datos && grafica(), 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => datos && pintar());
+cargar(); setInterval(cargar, 60000);
+setInterval(() => datos && aviso(Date.now()/1000 - datos.ts > 300 ? `⚠ El bot no actualiza el panel desde ${hace(datos.ts)}. ¿Está el PC encendido y el bot en marcha?` : ""), 30000);
+</script>
+</body>
+</html>
