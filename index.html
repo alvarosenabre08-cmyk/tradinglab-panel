@@ -92,6 +92,7 @@ svg{display:block;width:100%;height:auto}
   <section class="card">
     <h2>Bots</h2>
     <div class="tablewrap"><table id="t-bots"></table></div>
+    <div class="small muted" id="b-mercado" style="margin-top:8px"></div>
   </section>
 
   <div class="grid two">
@@ -121,6 +122,8 @@ svg{display:block;width:100%;height:auto}
       <div id="scout"></div>
       <h2 style="margin-top:18px">Versiones</h2>
       <div class="tablewrap"><table id="t-ver"></table></div>
+      <h2 style="margin-top:18px">Resultado por día</h2>
+      <div class="tablewrap"><table id="t-dias"></table></div>
     </section>
   </div>
   <p class="small muted">Dinero ficticio (paper trading). Se actualiza solo cada minuto.</p>
@@ -169,7 +172,17 @@ function pintar(){
   $("t-bots").innerHTML = `<tr><th>Bot</th><th>Valor</th><th>Resultado</th><th>Ganadas</th><th>Abiertas</th><th>Hoy</th><th>Caída máx.</th><th class="l">Estado</th></tr>` +
     d.bots.map(b => `<tr><td><b>${esc(b.nombre)}</b></td><td>${num(b.valor)} $</td><td>${signo(b.roi)}</td>
       <td>${b.cerradas ? `${b.ganadas}/${b.cerradas}` : "–"}</td><td>${b.abiertas}</td><td>${signo(b.hoy,2," $")}</td>
-      <td>${num(b.dd,0)} %</td><td class="l"><span class="tag ${b.estado==="activo"?"on":"off"}">${esc(b.estado)}</span></td></tr>`).join("");
+      <td>${num(b.dd,0)} %</td><td class="l"><span class="tag ${b.estado==="activo"?"on":"off"}">${esc(b.estado)}</span></td></tr>`).join("") +
+    (d.control ? `<tr class="muted"><td><i>${esc(d.control.nombre)}</i></td><td>${num(d.control.valor)} $</td><td>${signo(d.control.roi)}</td>
+      <td>${d.control.cerradas ? `${d.control.ganadas}/${d.control.cerradas}` : "–"}</td><td>${d.control.abiertas}</td><td>–</td><td>–</td>
+      <td class="l"><span class="tag">azar · fuera del total</span></td></tr>` : "");
+  const mg = d.mercado;
+  $("b-mercado").innerHTML = (mg && mg.clase ? `Mercado ahora: <b>${esc(mg.clase)}</b>${mg.motivos ? ` (${esc(mg.motivos)})` : ""} · solo se observa, no cambia operaciones. ` : "")
+    + (d.control ? "CONTROL compra al azar monedas parecidas cada vez que compra Consenso 2: si Consenso no le gana, no elige mejor que el azar." : "");
+  const dias = (d.dias||[]).slice().reverse();
+  $("t-dias").innerHTML = dias.length ? `<tr><th class="l">Día</th><th>Equipo</th><th>CONTROL</th></tr>` +
+    dias.map(x => `<tr><td class="l">${esc(x[0].slice(5))}</td><td>${signo(x[1],2," $")}</td><td class="muted">${signo(x[2],2," $")}</td></tr>`).join("")
+    : `<tr><td class="muted">Todavía no hay operaciones cerradas.</td></tr>`;
 
   const pos = d.posiciones || [];
   $("t-pos").innerHTML = pos.length ? `<tr><th>Moneda</th><th class="l">Bot</th><th>Ahora</th><th>Máx.</th><th>Tiempo</th><th>Invertido</th></tr>` +
