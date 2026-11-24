@@ -343,7 +343,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => dato
 let det = null, tabAct = "resumen", ordOps = {k:"f", dir:-1}, ordCart = {k:"e", dir:1};
 const ORDEN_EST = {COPYING:0,QUALIFIED:1,SIGNAL:2,OBSERVATION:3,SUSPENDED:4,REJECTED:5};
 async function cargarDet(){
-  try{ const r = await fetch(`${FIREBASE_URL}/detalle.json`, {cache:"no-store"}); if(!r.ok) throw 0;
+  try{ const r = await fetch(`${FIREBASE_URL}/panel/detalle.json`, {cache:"no-store"}); if(!r.ok) throw 0;
        const d = await r.json(); if(d){ det = d; llenarBots(); pintarDet(); } }
   catch(e){ if(!det) ["t-ops","t-cart","t-stats"].forEach(id => $(id).innerHTML = `<tr><td class="muted">Todavía no hay datos de detalle (el bot los sube cada 10 minutos).</td></tr>`); }
 }
@@ -377,10 +377,10 @@ function pintarCart(){
   if(sel.options.length < 4) sel.innerHTML += Object.keys(ORDEN_EST).map(e=>`<option value="${e}">${esc(EST[e])}</option>`).join("");
   let cs = det.carteras.filter(c => (!est || (est==="vig" ? c.e!=="REJECTED" : c.e===est)) && (!ori||c.o===ori) && (!q || `${c.n_} ${c.d}`.toLowerCase().includes(q)));
   ordenar(cs, ordCart);
-  $("t-cart").innerHTML = cab([["n_","Cartera",1],["e","Estado",1],["o","Origen",1],["n","Sombras"],["wr","Ganadas"],["med","Mediana"],["media","Media"],["pf","PF"],["dur","Min. gan."],["s0","Entrar 0 min"],["s5","5 min"],["s10","10 min"],["cn","Copias"],["c$","Copia $"],["mot","Último cambio",1]], ordCart, "cart") +
+  $("t-cart").innerHTML = cab([["n_","Cartera",1],["e","Estado",1],["o","Origen",1],["n","Sombras"],["wr","Ganadas"],["med","Mediana"],["media","Media"],["pf","PF"],["dur","Min. gan."],["s0","Entrar 0 min"],["s5","5 min"],["s10","10 min"],["cn","Copias"],["cu","Copia $"],["mot","Último cambio",1]], ordCart, "cart") +
     cs.map(c=>`<tr class="clic" data-w="${esc(c.n_)}"><td><b>${esc(c.n_)}</b>${c.op2?` <span class="tag">2ª oport.</span>`:""}</td><td class="l"><span class="tag ${c.e==="COPYING"?"on":c.e==="REJECTED"?"off":""}">${esc(EST[c.e]||c.e)}</span></td>
       <td class="l">${esc(c.o)}</td><td>${c.n}</td><td>${c.wr==null?"–":num(c.wr,0)+" %"}</td><td>${c.n?signo(c.med):"–"}</td><td>${c.n?signo(c.media):"–"}</td><td>${c.pf==null?"–":num(c.pf)}</td>
-      <td>${c.n?num(c.dur,0):"–"}</td><td>${signo(c.s0)}</td><td>${signo(c.s5)}</td><td>${signo(c.s10)}</td><td>${c.cn||"–"}</td><td>${c.cn?signo(c["c$"],2,""):"–"}</td><td class="l small muted">${esc(c.mot)}</td></tr>`).join("");
+      <td>${c.n?num(c.dur,0):"–"}</td><td>${signo(c.s0)}</td><td>${signo(c.s5)}</td><td>${signo(c.s10)}</td><td>${c.cn||"–"}</td><td>${c.cn?signo(c.cu,2,""):"–"}</td><td class="l small muted">${esc(c.mot)}</td></tr>`).join("");
 }
 function pintarStats(){
   const fmtIc = ic => ic ? `${signo(ic[0],2,"")} a ${signo(ic[1],2,"")}${ic[0]<0&&ic[1]>0?' <span class="tag">aún no se sabe</span>':' <span class="tag on">fiable</span>'}` : "pocas ops";
@@ -403,7 +403,7 @@ $("tabs").addEventListener("click", e => { const b = e.target.closest("button");
 ["c-q","c-est","c-ori"].forEach(id => $(id).addEventListener("input", pintarCart));
 document.addEventListener("click", e => {
   const th = e.target.closest("th.ord"); if(th){ const o = th.dataset.t==="ops" ? ordOps : ordCart, k = th.dataset.k;
-    o.dir = o.k===k ? -o.dir : (["f","p","r","i","d","l","n","wr","med","media","pf","s0","s5","s10","cn","c$"].includes(k) ? -1 : 1); o.k = k; pintarDet(); return; }
+    o.dir = o.k===k ? -o.dir : (["f","p","r","i","d","l","n","wr","med","media","pf","s0","s5","s10","cn","cu"].includes(k) ? -1 : 1); o.k = k; pintarDet(); return; }
   const tr = e.target.closest("tr.clic"); if(tr){ $("f-q").value = tr.dataset.w; $("f-bot").value = ""; $("f-res").value = ""; $("f-est").value = ""; $("f-cuando").value = "0";
     document.querySelector('#tabs button[data-t="ops"]').click(); }
 });
