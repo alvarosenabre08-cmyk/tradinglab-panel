@@ -160,6 +160,12 @@ tr.clic{cursor:pointer} tr.clic:hover td{background:color-mix(in srgb,var(--acce
 
   <div id="tab-cart" hidden>
     <section class="card">
+      <h2>Más cerca de ser copiadas</h2>
+      <div class="small muted resumen-f">Ordenadas por lo cerca que están de pasar el filtro de Copia (con su mejor perfil: REGULAR o PEGADA). Las cualificadas solo esperan sus últimas sombras de validación. El tamaño de la muestra pesa mucho: con pocas sombras los demás números no significan nada.</div>
+      <div id="cerca-copiando" class="small" style="margin:6px 0"></div>
+      <div class="tablewrap"><table id="t-cerca"></table></div>
+    </section>
+    <section class="card">
       <h2>Todas las carteras</h2>
       <div class="filtros">
         <input id="c-q" placeholder="Buscar cartera…">
@@ -357,7 +363,7 @@ function ordenar(arr, o){ return arr.sort((a,b)=>{ const x=a[o.k], y=b[o.k];
 function cab(cols, o, tabla){ return `<tr>${cols.map(([k,t,l])=>`<th class="ord${l?" l":""}" data-k="${k}" data-t="${tabla}">${t}${o.k===k?(o.dir>0?" ▲":" ▼"):""}</th>`).join("")}</tr>`; }
 function pintarDet(){
   if(!det) return;
-  if(tabAct==="ops") pintarOps(); else if(tabAct==="cart") pintarCart(); else if(tabAct==="stats") pintarStats();
+  if(tabAct==="ops") pintarOps(); else if(tabAct==="cart"){ pintarCerca(); pintarCart(); } else if(tabAct==="stats") pintarStats();
 }
 function pintarOps(){
   const q = $("f-q").value.trim().toLowerCase(), bot = $("f-bot").value, res = $("f-res").value, est = $("f-est").value, h = +$("f-cuando").value;
@@ -381,6 +387,18 @@ function pintarCart(){
     cs.map(c=>`<tr class="clic" data-w="${esc(c.n_)}"><td><b>${esc(c.n_)}</b>${c.op2?` <span class="tag">2ª oport.</span>`:""}</td><td class="l"><span class="tag ${c.e==="COPYING"?"on":c.e==="REJECTED"?"off":""}">${esc(EST[c.e]||c.e)}</span></td>
       <td class="l">${esc(c.o)}</td><td>${c.n}</td><td>${c.wr==null?"–":num(c.wr,0)+" %"}</td><td>${c.n?signo(c.med):"–"}</td><td>${c.n?signo(c.media):"–"}</td><td>${c.pf==null?"–":num(c.pf)}</td>
       <td>${c.n?num(c.dur,0):"–"}</td><td>${signo(c.s0)}</td><td>${signo(c.s5)}</td><td>${signo(c.s10)}</td><td>${c.cn||"–"}</td><td>${c.cn?signo(c.cu,2,""):"–"}</td><td class="l small muted">${esc(c.mot)}</td></tr>`).join("");
+}
+function pintarCerca(){
+  const cop = det.carteras.filter(c=>c.e==="COPYING").map(c=>`<b>${esc(c.n_)}</b>`);
+  $("cerca-copiando").innerHTML = cop.length ? `Ya se copian: ${cop.join(", ")}` : `<span class="muted">Ahora mismo no se copia ninguna cartera.</span>`;
+  const cs = det.carteras.filter(c=>c.cerca && c.n>0 || (c.cerca && c.e==="QUALIFIED"))
+    .sort((a,b)=>(b.cerca.p-a.cerca.p) || ((a.cerca.v??99)-(b.cerca.v??99)) || (b.n-a.n)).slice(0,15);
+  if(!cs.length){ $("t-cerca").innerHTML = `<tr><td class="muted">Todavía no hay datos (el bot los sube cada 10 minutos).</td></tr>`; return; }
+  $("t-cerca").innerHTML = `<tr><th>#</th><th class="l">Cartera</th><th class="l">Estado</th><th class="l">Origen</th><th>Sombras</th><th style="min-width:130px">Cerca de copiarse</th><th class="l">Perfil</th><th class="l">Le falta</th></tr>` +
+    cs.map((c,i)=>{ const k=c.cerca, col = k.p>=80?"var(--up)":k.p>=50?"var(--accent)":"var(--muted)";
+      return `<tr class="clic" data-w="${esc(c.n_)}"><td>${i+1}</td><td class="l"><b>${esc(c.n_)}</b></td><td class="l"><span class="tag${c.e==="QUALIFIED"?" on":""}">${esc(EST[c.e]||c.e)}</span></td>
+      <td class="l">${esc(c.o)}</td><td>${c.n}</td><td><b>${k.p} %</b><div class="bar"><span style="width:${k.p}%;background:${col}"></span></div></td>
+      <td class="l small">${k.pf==="validacion"?"validación":esc(k.pf)}</td><td class="l small muted" style="white-space:normal">${k.f.map(esc).join(" · ")||"–"}</td></tr>`; }).join("");
 }
 function pintarStats(){
   const fmtIc = ic => ic ? `${signo(ic[0],2,"")} a ${signo(ic[1],2,"")}${ic[0]<0&&ic[1]>0?' <span class="tag">aún no se sabe</span>':' <span class="tag on">fiable</span>'}` : "pocas ops";
