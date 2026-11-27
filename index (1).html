@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Lab</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --text:#14171c; --muted:#68707d; --line:#e3e6ea;
+  --up:#13834a; --down:#c4362c; --accent:#3b5bdb; --warn-bg:#fff4d6; --warn:#7a5600;
+  --s1:#3b5bdb; --s2:#d9480f; --s3:#2b8a3e; --s4:#ae3ec9; --s5:#868e96;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1115; --card:#181b21; --text:#e8eaee; --muted:#9aa1ad; --line:#2a2f38;
+    --up:#3ecf7c; --down:#ff6b5e; --accent:#7c94ff; --warn-bg:#3a2f0b; --warn:#ffd36b;
+    --s1:#7c94ff; --s2:#ff8f4d; --s3:#5bd37a; --s4:#d98bea; --s5:#aab1bb;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+h1{font-size:20px;margin:0;letter-spacing:.2px}
+h2{font-size:15px;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.up{color:var(--up)} .down{color:var(--down)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;border:1px solid var(--line);color:var(--muted)}
+.tag.on{border-color:var(--up);color:var(--up)} .tag.off{border-color:var(--down);color:var(--down)}
+a{color:var(--accent);text-decoration:none}
+#aviso{display:none;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.legend button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--text);
+  border-radius:999px;padding:3px 10px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.legend button[aria-pressed=false]{opacity:.45}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.seg{display:flex;gap:6px}
+.seg button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:3px 9px;cursor:pointer}
+.seg button.act{color:var(--text);border-color:var(--accent)}
+svg{display:block;width:100%;height:auto}
+.ev{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+.ev div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar span{display:block;height:100%;background:var(--accent)}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+nav.tabs button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:10px;padding:6px 14px;cursor:pointer}
+nav.tabs button.act{color:var(--text);border-color:var(--accent);font-weight:600}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.filtros input,.filtros select{font:inherit;font-size:14px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)}
+.filtros input{flex:1;min-width:180px}
+th.ord{cursor:pointer;user-select:none} th.ord:hover{color:var(--text)}
+tr.clic{cursor:pointer} tr.clic:hover td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.scroll{max-height:620px;overflow:auto}
+.resumen-f{margin-bottom:8px}
+#tip{position:fixed;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;
+  font-size:12px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:5}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>TRADING LAB <span class="muted" id="ver"></span></h1>
+    <span class="small muted" id="act">Cargando…</span>
+  </header>
+  <div id="aviso"></div>
+  <nav class="tabs" id="tabs">
+    <button data-t="resumen" class="act">Resumen</button><button data-t="ops">Operaciones</button>
+    <button data-t="cart">Carteras</button><button data-t="stats">Estadísticas</button>
+  </nav>
+  <div id="tab-resumen">
+
+  <section class="card">
+    <div class="kpis">
+      <div class="kpi"><div class="l">Equipo</div><div class="v" id="k-valor">–</div></div>
+      <div class="kpi"><div class="l">Resultado</div><div class="v" id="k-roi">–</div></div>
+      <div class="kpi"><div class="l">Hoy</div><div class="v" id="k-hoy">–</div></div>
+      <div class="kpi"><div class="l">Lleva</div><div class="v" id="k-dias">–</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2 style="margin:0">Evolución</h2>
+      <div class="seg" id="rango">
+        <button data-h="24">24 h</button><button data-h="72">3 días</button><button data-h="0" class="act">Todo</button>
+      </div>
+    </div>
+    <div id="grafica" style="margin-top:8px"></div>
+    <div class="legend" id="leyenda"></div>
+  </section>
+
+  <section class="card">
+    <h2>Bots</h2>
+    <div class="tablewrap"><table id="t-bots"></table></div>
+    <div class="small muted" id="b-mercado" style="margin-top:8px"></div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>Posiciones abiertas</h2>
+      <div class="tablewrap"><table id="t-pos"></table></div>
+    </section>
+    <section class="card">
+      <h2>Últimos avisos</h2>
+      <div class="ev" id="eventos"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Últimas operaciones cerradas</h2>
+    <div class="tablewrap"><table id="t-ult"></table></div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>Carteras</h2>
+      <div class="small muted" id="c-resumen" style="margin-bottom:8px"></div>
+      <div class="tablewrap"><table id="t-car"></table></div>
+    </section>
+    <section class="card">
+      <h2>SCOUT y Helius</h2>
+      <div id="scout"></div>
+      <h2 style="margin-top:18px">Versiones</h2>
+      <div class="tablewrap"><table id="t-ver"></table></div>
+      <h2 style="margin-top:18px">Resultado por día</h2>
+      <div class="tablewrap"><table id="t-dias"></table></div>
+    </section>
+  </div>
+  </div>
+
+  <div id="tab-ops" hidden>
+    <section class="card">
+      <h2>Todas las operaciones</h2>
+      <div class="filtros">
+        <input id="f-q" placeholder="Buscar moneda o cartera…">
+        <select id="f-bot"><option value="">Todos los bots</option></select>
+        <select id="f-res"><option value="">Ganadas y perdidas</option><option value="g">Solo ganadas</option><option value="p">Solo perdidas</option></select>
+        <select id="f-est"><option value="">Cerradas y abiertas</option><option value="c">Solo cerradas</option><option value="a">Solo abiertas</option></select>
+        <select id="f-cuando"><option value="0">Desde el inicio</option><option value="24">Últimas 24 h</option><option value="72">Últimos 3 días</option><option value="168">Última semana</option></select>
+      </div>
+      <div class="small resumen-f" id="ops-res"></div>
+      <div class="tablewrap scroll"><table id="t-ops"></table></div>
+    </section>
+  </div>
+
+  <div id="tab-cart" hidden>
+    <section class="card">
+      <h2>Más cerca de ser copiadas</h2>
+      <div class="small muted resumen-f">Ordenadas por lo cerca que están de pasar el filtro de Copia (con su mejor perfil: REGULAR o PEGADA). Las cualificadas solo esperan sus últimas sombras de validación. El tamaño de la muestra pesa mucho: con pocas sombras los demás números no significan nada.</div>
+      <div id="cerca-copiando" class="small" style="margin:6px 0"></div>
+      <div class="tablewrap"><table id="t-cerca"></table></div>
+    </section>
+    <section class="card">
+      <h2>Todas las carteras</h2>
+      <div class="filtros">
+        <input id="c-q" placeholder="Buscar cartera…">
+        <select id="c-est"><option value="">Todos los estados</option><option value="vig">Vigiladas (sin rechazadas)</option></select>
+        <select id="c-ori"><option value="">Todos los orígenes</option><option value="scout">SCOUT</option><option value="gmgn">GMGN</option><option value="manual">Manual</option></select>
+      </div>
+      <div class="small muted resumen-f">Pulsa una cartera para ver sus operaciones. «Entrar 0/5/10 min»: lo que se habría ganado de media entrando cuando la detectamos, 5 o 10 minutos después (las sombras ya incluyen costes).</div>
+      <div class="tablewrap scroll"><table id="t-cart"></table></div>
+    </section>
+  </div>
+
+  <div id="tab-stats" hidden>
+    <section class="card">
+      <h2>Estadísticas por bot (operaciones cerradas)</h2>
+      <div class="tablewrap"><table id="t-stats"></table></div>
+      <div class="small muted" style="margin-top:10px;line-height:1.6">
+        <b>Esperanza</b>: lo que gana o pierde de media cada operación, ya con costes. ·
+        <b>Intervalo 90 %</b>: dónde está la esperanza real con un 90 % de seguridad; si va de negativo a positivo, todavía no se sabe si el bot gana. ·
+        <b>PF</b>: lo ganado dividido por lo perdido (más de 1 = gana). ·
+        <b>Sin top 3</b>: resultado quitando sus 3 mejores operaciones. ·
+        <b>Por $ arriesgado</b>: compara bots con tamaños distintos. ·
+        <b>Pesimista</b>: con un 3–8 % más de deslizamiento por compra y venta, según la liquidez.
+      </div>
+    </section>
+    <div class="grid two">
+      <section class="card"><h2>Copia por cartera</h2><div class="tablewrap"><table id="t-copia"></table></div></section>
+      <section class="card"><h2>Por liquidez al comprar</h2><div class="tablewrap"><table id="t-liq"></table></div></section>
+    </div>
+  </div>
+  <p class="small muted" id="pie">Dinero ficticio (paper trading). El resumen se actualiza cada minuto; las pestañas de detalle, cada 10 minutos.</p>
+</main>
+<div id="tip"></div>
+<script>
+const FIREBASE_URL = "https://tradinglab-916a8-default-rtdb.europe-west1.firebasedatabase.app";
+const COLORES = ["--s1","--s2","--s3","--s4","--s5","--s1","--s2"];
+const EST = {COPYING:"copiando",QUALIFIED:"cualificada",OBSERVATION:"observación",SIGNAL:"señal",SUSPENDED:"suspendida",REJECTED:"rechazada"};
+let datos = null, rangoH = 0, ocultos = new Set(["__bots__"]);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const num = (x, d=2) => x == null ? "–" : Number(x).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
+const signo = (x, d=1, suf=" %") => x == null ? "–" : `<span class="${x>0?"up":x<0?"down":""}">${x>0?"+":""}${num(x,d)}${suf}</span>`;
+const hace = s => { const m = Math.round((Date.now()/1000 - s)/60); return m < 1 ? "ahora" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m/60)} h` : `hace ${Math.round(m/1440)} d`; };
+const dex = (t, s) => `<a href="https://dexscreener.com/solana/${encodeURIComponent(t)}" target="_blank" rel="noopener">${esc(s)}</a>`;
+
+async function cargar(){
+  try{
+    const r = await fetch(`${FIREBASE_URL}/panel.json`, {cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    if(!d) throw new Error("vacio");
+    datos = d; pintar();
+  }catch(e){
+    $("act").textContent = "No se pudieron cargar los datos";
+    if(!datos) aviso("No se pueden leer los datos de Firebase. Revisa la URL o las reglas de la base de datos.");
+  }
+}
+
+function aviso(t){ const a=$("aviso"); a.style.display = t ? "block" : "none"; a.textContent = t || ""; }
+
+function pintar(){
+  const d = datos, edad = Date.now()/1000 - d.ts;
+  $("ver").textContent = d.version;
+  $("act").textContent = `Actualizado ${new Date(d.ts*1000).toLocaleTimeString("es-ES")} · ${d.vigiladas} monedas vigiladas`;
+  aviso(edad > 300 ? `⚠ El bot no actualiza el panel desde ${hace(d.ts)}. ¿Está el PC encendido y el bot en marcha?` : "");
+  $("k-valor").textContent = `${num(d.equipo.valor)} $`;
+  $("k-roi").innerHTML = signo(d.equipo.roi, 2);
+  const hoy = d.bots.reduce((a,b)=>a+(b.hoy||0),0);
+  $("k-hoy").innerHTML = signo(hoy, 2, " $");
+  $("k-dias").textContent = `${num((d.ts-d.inicio)/86400,1)} días`;
+
+  $("t-bots").innerHTML = `<tr><th>Bot</th><th>Valor</th><th>Resultado</th><th>Ganadas</th><th>Abiertas</th><th>Hoy</th><th>Caída máx.</th><th class="l">Estado</th></tr>` +
+    d.bots.map(b => `<tr><td><b>${esc(b.nombre)}</b></td><td>${num(b.valor)} $</td><td>${signo(b.roi)}</td>
+      <td>${b.cerradas ? `${b.ganadas}/${b.cerradas}` : "–"}</td><td>${b.abiertas}</td><td>${signo(b.hoy,2," $")}</td>
+      <td>${num(b.dd,0)} %</td><td class="l"><span class="tag ${b.estado==="activo"?"on":"off"}">${esc(b.estado)}</span></td></tr>`).join("") +
+    (d.control ? `<tr class="muted"><td><i>${esc(d.control.nombre)}</i></td><td>${num(d.control.valor)} $</td><td>${signo(d.control.roi)}</td>
+      <td>${d.control.cerradas ? `${d.control.ganadas}/${d.control.cerradas}` : "–"}</td><td>${d.control.abiertas}</td><td>–</td><td>–</td>
+      <td class="l"><span class="tag">azar · fuera del total</span></td></tr>` : "");
+  const mg = d.mercado;
+  $("b-mercado").innerHTML = (mg && mg.clase ? `Mercado ahora: <b>${esc(mg.clase)}</b>${mg.motivos ? ` (${esc(mg.motivos)})` : ""} · solo se observa, no cambia operaciones. ` : "")
+    + (d.control ? "CONTROL compra al azar monedas parecidas cada vez que compra Consenso 2: si Consenso no le gana, no elige mejor que el azar." : "");
+  const dias = (d.dias||[]).slice().reverse();
+  $("t-dias").innerHTML = dias.length ? `<tr><th class="l">Día</th><th>Equipo</th><th>CONTROL</th></tr>` +
+    dias.map(x => `<tr><td class="l">${esc(x[0].slice(5))}</td><td>${signo(x[1],2," $")}</td><td class="muted">${signo(x[2],2," $")}</td></tr>`).join("")
+    : `<tr><td class="muted">Todavía no hay operaciones cerradas.</td></tr>`;
+
+  const pos = d.posiciones || [];
+  $("t-pos").innerHTML = pos.length ? `<tr><th>Moneda</th><th class="l">Bot</th><th>Ahora</th><th>Máx.</th><th>Tiempo</th><th>Invertido</th></tr>` +
+    pos.map(p => `<tr><td>${dex(p.token,p.sim)}${p.mitad?' <span class="tag on">½ vendida</span>':""}${p.prorrogas?` <span class="tag">+${p.prorrogas*2} h</span>`:""}</td>
+      <td class="l">${esc(p.bot)}</td><td>${signo(p.cambio)}</td><td>${signo(p.max)}</td><td>${num(p.min,0)} min</td><td>${num(p.inv)} $</td></tr>`).join("")
+    : `<tr><td class="muted">Ninguna ahora mismo.</td></tr>`;
+
+  const ev = d.eventos || [];
+  $("eventos").innerHTML = ev.length ? ev.map(x => `<div>${esc(x)}</div>`).join("") : `<div class="muted">Sin avisos desde que arrancó el bot.</div>`;
+
+  $("t-ult").innerHTML = `<tr><th class="l">Cuándo</th><th class="l">Moneda</th><th class="l">Bot</th><th>Resultado</th><th>$</th><th>Duración</th><th class="l">Motivo</th></tr>` +
+    (d.ultimas||[]).map(u => `<tr><td class="l">${esc(u.fecha.slice(5,16))}</td><td class="l">${dex(u.token,u.sim)}</td><td class="l">${esc(u.bot)}</td>
+      <td>${signo(u.pct)}</td><td>${signo(u.usd,2,"")}</td><td>${num(u.min,0)} min</td><td class="l small muted">${esc(u.motivo)}</td></tr>`).join("");
+
+  const c = d.carteras, k = c.conteo || {};
+  $("c-resumen").innerHTML = Object.keys(EST).filter(e => k[e]).map(e => `${EST[e]}: <b>${k[e]}</b>`).join(" · ") + ` · ${c.sombras} sombras abiertas`;
+  $("t-car").innerHTML = `<tr><th>Cartera</th><th class="l">Estado</th><th>Sombras</th><th>Media</th><th>Ganadoras</th></tr>` +
+    (c.lista||[]).slice().sort((a,b)=>(b.n>0)-(a.n>0)).slice(0,25).map(x => `<tr><td>${esc(x.nombre)}${x.origen==="scout"?' <span class="tag">SCOUT</span>':""}</td>
+      <td class="l">${esc(EST[x.estado]||x.estado)}</td><td>${x.n}${x.abiertas?` <span class="muted">(+${x.abiertas})</span>`:""}</td>
+      <td>${x.n?signo(x.media):"–"}</td><td>${x.n?`${num(x.dur,0)} min`:"–"}</td></tr>`).join("");
+
+  const s = d.scout, h = d.helius, pct = Math.min(100, h.prevision / h.limite * 100);
+  $("scout").innerHTML = `<div>Carteras encontradas: <b>${s.encontradas}</b> (${s.anadidas} añadidas en total)</div>
+    <div>Candidatas esperando: <b>${s.candidatas}</b> · monedas revisadas: ${s.revisadas}</div>
+    <div class="muted small">Última búsqueda: ${s.ultima ? hace(s.ultima) : "todavía no"}</div>
+    <div style="margin-top:12px">Helius: <b>${num(h.consultas,0)}</b> consultas este mes · previsión ${num(h.prevision,0)} de ${num(h.limite,0)}</div>
+    <div class="bar"><span style="width:${pct.toFixed(1)}%;background:${pct>90?css("--down"):css("--accent")}"></span></div>`;
+
+  const vs = (d.versiones||[]).concat([[d.version, `${num((d.ts-d.inicio)/86400,1)} días`, d.equipo.roi]]);
+  $("t-ver").innerHTML = `<tr><th>Versión</th><th>Duración</th><th>Resultado</th></tr>` +
+    vs.map(v => `<tr><td>${v[0]===d.version?"<b>":""}${esc(v[0])}${v[0]===d.version?" (ahora)</b>":""}</td><td>${esc(v[1])}</td><td>${signo(v[2])}</td></tr>`).join("");
+
+  grafica();
+}
+
+function grafica(){
+  const cv = datos.curva || {puntos:[]}, nombres = cv.nombres || [];
+  let pts = cv.puntos || [];
+  if(rangoH) pts = pts.filter(p => p[0] >= datos.ts - rangoH*3600);
+  const series = [{nombre:"Equipo", color:css("--text"), vals: pts.map(p=>p[1]), ancho:2.4, base:datos.equipo.inicial}]
+    .concat(nombres.map((n,i)=>({nombre:n, color:css(COLORES[i]), vals: pts.map(p=>(p[2]||[])[i]), ancho:1.5, base:250})));
+  const W = Math.max(300, $("grafica").clientWidth || 1000), H = W < 600 ? 230 : 300, pl = 46, pr = 8, pt = 10, pb = 24;
+  if(pts.length < 2){ $("grafica").innerHTML = `<p class="muted">Aún no hay datos suficientes.</p>`; return; }
+  const vis = series.filter(s => !ocultos.has(s.nombre) && !(s.nombre!=="Equipo" && ocultos.has("__bots__")));
+  const usarPct = vis.some(s=>s.nombre!=="Equipo");
+  const val = (s,v) => v==null ? null : usarPct ? (v/s.base-1)*100 : v;
+  const todos = vis.flatMap(s => s.vals.map(v=>val(s,v)).filter(v=>v!=null));
+  let lo = Math.min(...todos), hi = Math.max(...todos);
+  if(usarPct){ lo = Math.min(lo,0); hi = Math.max(hi,0); }
+  const pad = (hi-lo)*0.08 || 1; lo -= pad; hi += pad;
+  const t0 = pts[0][0], t1 = pts[pts.length-1][0];
+  const X = t => pl + (t-t0)/(t1-t0||1)*(W-pl-pr), Y = v => pt + (hi-v)/(hi-lo)*(H-pt-pb);
+  let g = "";
+  for(let i=0;i<=4;i++){ const v = lo + (hi-lo)*i/4, y = Y(v);
+    g += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${css("--line")}"/>`+
+         `<text x="${pl-6}" y="${y+4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${usarPct?(v>0?"+":"")+v.toFixed(0)+"%":v.toFixed(0)}</text>`; }
+  const ref = usarPct ? 0 : datos.equipo.inicial;
+  if(ref>=lo && ref<=hi) g += `<line x1="${pl}" x2="${W-pr}" y1="${Y(ref)}" y2="${Y(ref)}" stroke="${css("--muted")}" stroke-dasharray="4 4"/>`;
+  const dias = Math.max(1, Math.round((t1-t0)/86400));
+  const nt = Math.max(1, Math.min(dias, W < 600 ? 3 : 6));
+  for(let i=0;i<=nt;i++){ const t = t0 + (t1-t0)*i/nt;
+    const f = new Date(t*1000), txt = (t1-t0) < 2*86400 ? f.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : f.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+    g += `<text x="${X(t)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${css("--muted")}">${txt}</text>`; }
+  for(const s of vis){
+    let d = "", pen = false;
+    s.vals.forEach((v,i)=>{ const y = val(s,v); if(y==null){pen=false;return;} d += `${pen?"L":"M"}${X(pts[i][0]).toFixed(1)},${Y(y).toFixed(1)}`; pen = true; });
+    g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.ancho}" stroke-linejoin="round"/>`;
+  }
+  g += `<line id="cursor" y1="${pt}" y2="${H-pb}" stroke="${css("--muted")}" stroke-width="1" opacity="0"/>`;
+  $("grafica").innerHTML = `<svg viewBox="0 0 ${W} ${H}" id="svg" role="img" aria-label="Evolución del capital">${g}</svg>`;
+  $("leyenda").innerHTML = [{nombre:"Equipo",color:css("--text")}, {nombre:"__bots__",color:css("--muted"),txt:"Bots (en %)"}]
+    .concat(ocultos.has("__bots__") ? [] : nombres.map((n,i)=>({nombre:n,color:css(COLORES[i])})))
+    .map(s => `<button data-s="${esc(s.nombre)}" aria-pressed="${!ocultos.has(s.nombre)}"><i style="background:${s.color}"></i>${esc(s.txt||s.nombre)}</button>`).join("");
+  const svg = $("svg"), tip = $("tip"), cur = svg.querySelector("#cursor");
+  svg.onmousemove = svg.ontouchmove = ev => {
+    const e = ev.touches ? ev.touches[0] : ev, r = svg.getBoundingClientRect();
+    const x = (e.clientX - r.left)/r.width*W; if(x<pl||x>W-pr){tip.style.display="none";return;}
+    const t = t0 + (x-pl)/(W-pl-pr)*(t1-t0);
+    let i = 0, best = Infinity; pts.forEach((p,j)=>{const dd=Math.abs(p[0]-t); if(dd<best){best=dd;i=j;}});
+    cur.setAttribute("x1",X(pts[i][0])); cur.setAttribute("x2",X(pts[i][0])); cur.setAttribute("opacity",".6");
+    tip.innerHTML = `<b>${new Date(pts[i][0]*1000).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</b><br>`+
+      vis.map(s=>`<span style="color:${s.color}">●</span> ${esc(s.nombre)}: ${s.vals[i]==null?"–":num(s.vals[i])+" $"}`).join("<br>");
+    tip.style.display="block"; tip.style.left = Math.min(e.clientX+12, innerWidth-200)+"px"; tip.style.top = (e.clientY+12)+"px";
+  };
+  svg.onmouseleave = () => { tip.style.display="none"; cur.setAttribute("opacity","0"); };
+}
+
+$("leyenda").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
+  const n = b.dataset.s; ocultos.has(n) ? ocultos.delete(n) : ocultos.add(n); grafica(); });
+$("rango").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
+  rangoH = +b.dataset.h; [...$("rango").children].forEach(x=>x.classList.toggle("act", x===b)); grafica(); });
+let _rz; addEventListener("resize", () => { clearTimeout(_rz); _rz = setTimeout(() => datos && grafica(), 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => datos && pintar());
+// ---------- pestañas de detalle (detalle.json, cada 10 min) ----------
+let det = null, tabAct = "resumen", ordOps = {k:"f", dir:-1}, ordCart = {k:"e", dir:1};
+const ORDEN_EST = {COPYING:0,QUALIFIED:1,SIGNAL:2,OBSERVATION:3,SUSPENDED:4,REJECTED:5};
+async function cargarDet(){
+  try{ const r = await fetch(`${FIREBASE_URL}/panel/detalle.json`, {cache:"no-store"}); if(!r.ok) throw 0;
+       const d = await r.json(); if(d){ det = d; llenarBots(); pintarDet(); } }
+  catch(e){ if(!det) ["t-ops","t-cart","t-stats"].forEach(id => $(id).innerHTML = `<tr><td class="muted">Todavía no hay datos de detalle (el bot los sube cada 10 minutos).</td></tr>`); }
+}
+function llenarBots(){
+  const sel = $("f-bot"), act = sel.value, bots = [...new Set(det.ops.map(o=>o.b))].sort();
+  sel.innerHTML = `<option value="">Todos los bots</option>` + bots.map(b=>`<option${b===act?" selected":""}>${esc(b)}</option>`).join("");
+}
+function ordenar(arr, o){ return arr.sort((a,b)=>{ const x=a[o.k], y=b[o.k];
+  if(o.k==="e") return (ORDEN_EST[x]-ORDEN_EST[y])*o.dir || ((b.media??-1e9)-(a.media??-1e9));
+  if(x==null) return 1; if(y==null) return -1; return (x>y?1:x<y?-1:0)*o.dir; }); }
+function cab(cols, o, tabla){ return `<tr>${cols.map(([k,t,l])=>`<th class="ord${l?" l":""}" data-k="${k}" data-t="${tabla}">${t}${o.k===k?(o.dir>0?" ▲":" ▼"):""}</th>`).join("")}</tr>`; }
+function pintarDet(){
+  if(!det) return;
+  if(tabAct==="ops") pintarOps(); else if(tabAct==="cart"){ pintarCerca(); pintarCart(); } else if(tabAct==="stats") pintarStats();
+}
+function pintarOps(){
+  const q = $("f-q").value.trim().toLowerCase(), bot = $("f-bot").value, res = $("f-res").value, est = $("f-est").value, h = +$("f-cuando").value;
+  const lim = h ? new Date(Date.now()-h*3600e3).toISOString().slice(0,19).replace("T"," ") : "";
+  let ops = det.ops.filter(o => (!bot||o.b===bot) && (!res||(res==="g"?o.r>0:o.r<=0)&&!o.a) && (!est||(est==="a"?o.a:!o.a))
+    && (!lim||o.f>=lim) && (!q || `${o.s} ${o.w} ${o.t}`.toLowerCase().includes(q)));
+  const cer = ops.filter(o=>!o.a), tot = cer.reduce((a,o)=>a+o.r,0), gan = cer.filter(o=>o.r>0).length;
+  $("ops-res").innerHTML = cer.length ? `<b>${cer.length}</b> cerradas · ganadas <b>${gan}</b> (${num(gan/cer.length*100,0)} %) · total ${signo(tot,2," $")} · media por operación ${signo(tot/cer.length,2," $")} · media ${signo(cer.reduce((a,o)=>a+o.p,0)/cer.length)}` + (ops.length>cer.length?` · ${ops.length-cer.length} abiertas`:"") : (ops.length?`${ops.length} abiertas`:"Ninguna operación con estos filtros.");
+  ordenar(ops, ordOps);
+  $("t-ops").innerHTML = cab([["f","Compra",1],["s","Moneda",1],["b","Bot",1],["w","Cartera(s)",1],["p","Resultado"],["r","$"],["i","Invertido"],["d","Min."],["l","Liquidez"],["x","Motivo",1]], ordOps, "ops") +
+    ops.slice(0,500).map(o=>`<tr><td class="l">${esc(o.f.slice(5,16))}</td><td class="l">${dex(o.t,o.s)}${o.a?' <span class="tag on">abierta</span>':""}</td><td class="l">${esc(o.b)}</td>
+      <td class="l small">${esc(o.w)}</td><td>${signo(o.p)}</td><td>${o.a?"–":signo(o.r,2,"")}</td><td>${num(o.i)}</td><td>${o.a?"–":num(o.d,0)}</td><td>${num(o.l/1000,0)}k</td><td class="l small muted">${esc(o.x)}</td></tr>`).join("");
+}
+function pintarCart(){
+  const q = $("c-q").value.trim().toLowerCase(), est = $("c-est").value, ori = $("c-ori").value;
+  const sel = $("c-est");
+  if(sel.options.length < 4) sel.innerHTML += Object.keys(ORDEN_EST).map(e=>`<option value="${e}">${esc(EST[e])}</option>`).join("");
+  let cs = det.carteras.filter(c => (!est || (est==="vig" ? c.e!=="REJECTED" : c.e===est)) && (!ori||c.o===ori) && (!q || `${c.n_} ${c.d}`.toLowerCase().includes(q)));
+  ordenar(cs, ordCart);
+  $("t-cart").innerHTML = cab([["n_","Cartera",1],["e","Estado",1],["o","Origen",1],["n","Sombras"],["wr","Ganadas"],["med","Mediana"],["media","Media"],["pf","PF"],["dur","Min. gan."],["s0","Entrar 0 min"],["s5","5 min"],["s10","10 min"],["cn","Copias"],["cu","Copia $"],["mot","Último cambio",1]], ordCart, "cart") +
+    cs.map(c=>`<tr class="clic" data-w="${esc(c.n_)}"><td><b>${esc(c.n_)}</b>${c.op2?` <span class="tag">2ª oport.</span>`:""}</td><td class="l"><span class="tag ${c.e==="COPYING"?"on":c.e==="REJECTED"?"off":""}">${esc(EST[c.e]||c.e)}</span></td>
+      <td class="l">${esc(c.o)}</td><td>${c.n}</td><td>${c.wr==null?"–":num(c.wr,0)+" %"}</td><td>${c.n?signo(c.med):"–"}</td><td>${c.n?signo(c.media):"–"}</td><td>${c.pf==null?"–":num(c.pf)}</td>
+      <td>${c.n?num(c.dur,0):"–"}</td><td>${signo(c.s0)}</td><td>${signo(c.s5)}</td><td>${signo(c.s10)}</td><td>${c.cn||"–"}</td><td>${c.cn?signo(c.cu,2,""):"–"}</td><td class="l small muted">${esc(c.mot)}</td></tr>`).join("");
+}
+function pintarCerca(){
+  const cop = det.carteras.filter(c=>c.e==="COPYING").map(c=>`<b>${esc(c.n_)}</b>`);
+  $("cerca-copiando").innerHTML = cop.length ? `Ya se copian: ${cop.join(", ")}` : `<span class="muted">Ahora mismo no se copia ninguna cartera.</span>`;
+  const cs = det.carteras.filter(c=>c.cerca && c.n>0 || (c.cerca && c.e==="QUALIFIED"))
+    .sort((a,b)=>(b.cerca.p-a.cerca.p) || ((a.cerca.v??99)-(b.cerca.v??99)) || (b.n-a.n)).slice(0,15);
+  if(!cs.length){ $("t-cerca").innerHTML = `<tr><td class="muted">Todavía no hay datos (el bot los sube cada 10 minutos).</td></tr>`; return; }
+  $("t-cerca").innerHTML = `<tr><th>#</th><th class="l">Cartera</th><th class="l">Estado</th><th class="l">Origen</th><th>Sombras</th><th style="min-width:130px">Cerca de copiarse</th><th class="l">Perfil</th><th class="l">Le falta</th></tr>` +
+    cs.map((c,i)=>{ const k=c.cerca, col = k.p>=80?"var(--up)":k.p>=50?"var(--accent)":"var(--muted)";
+      return `<tr class="clic" data-w="${esc(c.n_)}"><td>${i+1}</td><td class="l"><b>${esc(c.n_)}</b></td><td class="l"><span class="tag${c.e==="QUALIFIED"?" on":""}">${esc(EST[c.e]||c.e)}</span></td>
+      <td class="l">${esc(c.o)}</td><td>${c.n}</td><td><b>${k.p} %</b><div class="bar"><span style="width:${k.p}%;background:${col}"></span></div></td>
+      <td class="l small">${k.pf==="validacion"?"validación":esc(k.pf)}</td><td class="l small muted" style="white-space:normal">${k.f.map(esc).join(" · ")||"–"}</td></tr>`; }).join("");
+}
+function pintarStats(){
+  const fmtIc = ic => ic ? `${signo(ic[0],2,"")} a ${signo(ic[1],2,"")}${ic[0]<0&&ic[1]>0?' <span class="tag">aún no se sabe</span>':' <span class="tag on">fiable</span>'}` : "pocas ops";
+  $("t-stats").innerHTML = `<tr><th>Bot</th><th>Ops</th><th>Ganadas</th><th>Total</th><th>Esperanza</th><th>Intervalo 90 %</th><th>PF</th><th>Mediana</th><th>Sin top 3</th><th>Caída máx.</th><th>Por $ arriesgado</th><th>Pesimista</th></tr>` +
+    det.stats.map(s=>`<tr${s.fantasma?' class="muted"':""}><td><b>${esc(s.bot)}</b>${s.fantasma?' <span class="tag">fuera</span>':""}</td>${s.n?`<td>${s.n}</td><td>${num(s.wr,0)} %</td>
+      <td>${signo(s.total,2," $")}</td><td>${signo(s.esp,2," $")}</td><td class="small">${fmtIc(s.ic)}</td><td>${s.pf==null?"∞":num(s.pf)}</td><td>${signo(s.med)}</td>
+      <td>${signo(s.sin3,2," $")}</td><td>${num(s.dd,1)} %</td><td>${signo(s.arr)}</td><td>${signo(s.pes,2," $")}</td>`:`<td colspan="11" class="muted l">sin operaciones cerradas</td>`}</tr>`).join("");
+  const cop = {}; det.ops.filter(o=>o.b==="Copia"&&!o.a).forEach(o=>{ (cop[o.w] ??= []).push(o.r); });
+  const fil = Object.entries(cop).sort((a,b)=>b[1].reduce((x,y)=>x+y,0)-a[1].reduce((x,y)=>x+y,0));
+  $("t-copia").innerHTML = fil.length ? `<tr><th>Cartera</th><th>Ops</th><th>Ganadas</th><th>Total</th></tr>` + fil.map(([w,rs])=>`<tr><td>${esc(w)}</td><td>${rs.length}</td><td>${rs.filter(r=>r>0).length}</td><td>${signo(rs.reduce((a,b)=>a+b,0),2," $")}</td></tr>`).join("") : `<tr><td class="muted">Copia aún no ha cerrado operaciones.</td></tr>`;
+  const tramo = l => l<25000?"< 25k":l<50000?"25–50k":l<150000?"50–150k":"> 150k", bots = [...new Set(det.ops.map(o=>o.b))], tr = ["< 25k","25–50k","50–150k","> 150k"];
+  $("t-liq").innerHTML = `<tr><th>Bot</th>${tr.map(t=>`<th>${t}</th>`).join("")}</tr>` + bots.map(b=>`<tr><td>${esc(b)}</td>${tr.map(t=>{ const rs = det.ops.filter(o=>o.b===b&&!o.a&&tramo(o.l)===t).map(o=>o.r);
+      return `<td>${rs.length?`${signo(rs.reduce((x,y)=>x+y,0),2,"")} <span class="muted small">(${rs.length})</span>`:"–"}</td>`; }).join("")}</tr>`).join("");
+}
+$("tabs").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; tabAct = b.dataset.t;
+  [...$("tabs").children].forEach(x=>x.classList.toggle("act", x===b));
+  ["resumen","ops","cart","stats"].forEach(t => $("tab-"+t).hidden = t!==tabAct);
+  if(tabAct!=="resumen"){ det ? pintarDet() : cargarDet(); } else if(datos) grafica(); });
+["f-q","f-bot","f-res","f-est","f-cuando"].forEach(id => $(id).addEventListener("input", pintarOps));
+["c-q","c-est","c-ori"].forEach(id => $(id).addEventListener("input", pintarCart));
+document.addEventListener("click", e => {
+  const th = e.target.closest("th.ord"); if(th){ const o = th.dataset.t==="ops" ? ordOps : ordCart, k = th.dataset.k;
+    o.dir = o.k===k ? -o.dir : (["f","p","r","i","d","l","n","wr","med","media","pf","s0","s5","s10","cn","cu"].includes(k) ? -1 : 1); o.k = k; pintarDet(); return; }
+  const tr = e.target.closest("tr.clic"); if(tr){ $("f-q").value = tr.dataset.w; $("f-bot").value = ""; $("f-res").value = ""; $("f-est").value = ""; $("f-cuando").value = "0";
+    document.querySelector('#tabs button[data-t="ops"]').click(); }
+});
+cargar(); setInterval(cargar, 60000);
+cargarDet(); setInterval(cargarDet, 300000);
+setInterval(() => datos && aviso(Date.now()/1000 - datos.ts > 300 ? `⚠ El bot no actualiza el panel desde ${hace(datos.ts)}. ¿Está el PC encendido y el bot en marcha?` : ""), 30000);
+</script>
+</body>
+</html>
